@@ -8,13 +8,13 @@ This implementation focuses on the [OGB-Mol](https://ogb.stanford.edu/docs/graph
 
 ## Results
 
-Dataset       | #params | Metric         | Valid           | Test           |
---------------|---------|----------------|-----------------|----------------|
-PCQM4M        | 47.4M   | MAE            | 0.1225          | --             |
-PCQM4M-V2     | 47.4M   | MAE            | 0.0883          | --             |
-PCQM4M-V2     | 89.3M   | MAE            | 0.0869          | 0.0872         |
-OGBG-MolPCBA  | 110.8M  | Avg. Precision | 0.3021 ± 0.0053 | 0.2961 ± 0.0024|
-OGBG-MolHIV   | 110.8M  | ROC-AUC        | 0.8060 ± 0.0065 | 0.8051 ± 0.0030|
+Dataset       | #layers | #params | Metric         | Valid           | Test           |
+--------------|---------|---------|----------------|-----------------|----------------|
+PCQM4M        | 18      | 47.4M   | MAE            | 0.1225          | --             |
+PCQM4M-V2     | 18      | 47.4M   | MAE            | 0.0883          | --             |
+PCQM4M-V2     | 24      | 89.3M   | MAE            | 0.0869          | 0.0872         |
+OGBG-MolPCBA  | 30      | 110.8M  | Avg. Precision | 0.3021 ± 0.0053 | 0.2961 ± 0.0024|
+OGBG-MolHIV   | 30      | 110.8M  | ROC-AUC        | 0.8060 ± 0.0065 | 0.8051 ± 0.0030|
 
 ## Requirements
 
