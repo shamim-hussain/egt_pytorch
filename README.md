@@ -56,7 +56,7 @@ There many different configurations. The only **required** configuration is `sch
 
 `save_path`: The training process will create a model directory containing the logs, checkpoints, configs, model summary and predictions/evaluations. By default it creates a folder at *models/<dataset_name>* but it can be changed via this config.
 
-`cache_dir`: During first time of training/evaluation the data will be cached. Default path is *cache_data/<dataset_name>/<positional_encoding>*. But it can be changed via this config.
+`cache_dir`: During first time of training/evaluation the data will be cached. Default path is *cache_data/<dataset_name>*. But it can be changed via this config.
 
 `distributed`: In a multi-gpu setting you can set it to True, for distributed training. Note that, the batch size should also be adjusted accordingly.
 
