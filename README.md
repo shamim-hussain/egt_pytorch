@@ -54,11 +54,11 @@ There many different configurations. The only **required** configuration is `sch
 
 `model_name`: Serves as an identifier for the model, also specifies default path of the model directory, weight files etc.
 
-`save_path`: The training process will create a model directory containing the logs, checkpoints, configs, model summary and predictions/evaluations. By default it creates a folder at *models/<dataset_name>/<model_name>* but it can be changed via this config.
+`save_path`: The training process will create a model directory containing the logs, checkpoints, configs, model summary and predictions/evaluations. By default it creates a folder at *models/<dataset_name>* but it can be changed via this config.
 
 `cache_dir`: During first time of training/evaluation the data will be cached. Default path is *cache_data/<dataset_name>/<positional_encoding>*. But it can be changed via this config.
 
-`distributed`: In a multi-gpu setting you can set it to True, for distributed training.
+`distributed`: In a multi-gpu setting you can set it to True, for distributed training. Note that, the batch size should also be adjusted accordingly.
 
 `batch_size`: Batch size. In case of distributed training it is the local batch size. So, the total batch size = batch_size x number of available gpus.
 
@@ -100,7 +100,7 @@ There many different configurations. The only **required** configuration is `sch
 
 `svd_output_dim` : Number of left and right singular vectors used as svd encodings.
 
-`svd_random_neg` : Wheter to randomly flip the signs of the singular vectors. Default - true.
+`svd_random_neg` : Whether to randomly flip the signs of the singular vectors. Default - true.
 
 `pretrained_weights_file` : Used to specify the learned weights of an already trained model.
 
