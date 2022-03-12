@@ -36,7 +36,7 @@ def _egt(num_heads: int,
     shp = QKV.shape
     Q, K, V = QKV.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
     
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K)
+    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
     H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
     
     if mask is None:
@@ -77,7 +77,7 @@ def _egt_scaled(num_heads: int,
     shp = QKV.shape
     Q, K, V = QKV.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
     
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K)
+    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
     H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
     
     if mask is None:
@@ -119,7 +119,7 @@ def _egt_edge(num_heads: int,
     shp = QK.shape
     Q, K = QK.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
     
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K)
+    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
     H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
     return H_hat
 
