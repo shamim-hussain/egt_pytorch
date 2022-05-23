@@ -1,5 +1,9 @@
 # Edge-augmented Graph Transformer (PyTorch)
 
+## News
+
+* 05/18/2022 - Our paper "Global Self-Attention as a Replacement for Graph Convolution" has been accepted at [KDD'22](https://kdd.org/kdd2022/). The preprint at arXiv will be updated soon with the latest version of the paper.
+
 ## Introduction
 
 This is the official **PyTorch** implementation of the **Edge-augmented Graph Transformer (EGT)** as described in <https://arxiv.org/abs/2108.03348>, which augments the Transformer architecture with residual edge channels. The resultant architecture can directly process graph-structured data. For a **Tensorflow** implementation see: <https://github.com/shamim-hussain/egt>.
