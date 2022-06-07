@@ -2,7 +2,7 @@
 
 ## News
 
-* 06/05/2022 - The accepted prerprint our paper in KDD '22 is now available on arXiv. It includes discussions on dynamic centrality scalers, random masking, attention dropout and other details about the latest experiments and results. Note that the title is changed to **"Global Self-Attention as a Replacement for Graph Convolution"**.
+* 06/05/2022 - The [accepted prerprint](https://arxiv.org/abs/2108.03348) our paper in KDD '22 is now available on arXiv. It includes discussions on dynamic centrality scalers, random masking, attention dropout and other details about the latest experiments and results. Note that the title is changed to **"Global Self-Attention as a Replacement for Graph Convolution"**.
 * 05/18/2022 - Our paper "Global Self-Attention as a Replacement for Graph Convolution" has been accepted at [KDD'22](https://kdd.org/kdd2022/). The preprint at arXiv will be updated soon with the latest version of the paper.
 
 ## Introduction
