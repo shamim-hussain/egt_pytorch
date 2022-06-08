@@ -33,6 +33,7 @@ class EGT_MOL_Training(LinearLRWarmupCosineDecay, VerboseLR, EGTTraining):
         model_config.update(
             num_virtual_nodes = self.config.num_virtual_nodes,
             upto_hop          = self.config.upto_hop,
+            svd_encodings     = self.config.svd_output_dim,
         )
         return model_config, model_class
     
