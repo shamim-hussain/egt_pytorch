@@ -21,9 +21,11 @@ class EGT_Base(nn.Module):
                  clip_logits_value   = [-5,5]    ,
                  node_ffn_multiplier = 2.        ,
                  edge_ffn_multiplier = 2.        ,
+                 scale_dot           = True      ,
                  scale_degree        = False     ,
                  node_ended          = False     ,
                  edge_ended          = False     ,
+                 egt_simple          = False     ,
                  **kwargs
                  ):
         super().__init__(**kwargs)
@@ -42,9 +44,11 @@ class EGT_Base(nn.Module):
         self.clip_logits_value   = clip_logits_value
         self.node_ffn_multiplier = node_ffn_multiplier 
         self.edge_ffn_multiplier = edge_ffn_multiplier 
+        self.scale_dot           = scale_dot
         self.scale_degree        = scale_degree        
         self.node_ended          = node_ended          
         self.edge_ended          = edge_ended          
+        self.egt_simple          = egt_simple          
         
         self.layer_common_kwargs = dict(
              node_width          = self.node_width            ,
@@ -58,6 +62,7 @@ class EGT_Base(nn.Module):
              attn_maskout        = self.attn_maskout          ,
              activation          = self.activation            ,
              clip_logits_value   = self.clip_logits_value     ,
+             scale_dot           = self.scale_dot             ,
              scale_degree        = self.scale_degree          ,
              node_ffn_multiplier = self.node_ffn_multiplier   ,
              edge_ffn_multiplier = self.edge_ffn_multiplier   ,
@@ -82,7 +87,8 @@ class EGT(EGT_Base):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)        
         
-        self.EGT_layers = nn.ModuleList([EGT_Layer(**self.layer_common_kwargs)
+        self.EGT_layers = nn.ModuleList([EGT_Layer(**self.layer_common_kwargs, 
+                                                   edge_update=(not self.egt_simple))
                                          for _ in range(self.model_height-1)])
     
         if (not self.node_ended) and (not self.edge_ended):

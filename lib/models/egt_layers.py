@@ -21,111 +21,82 @@ class Graph(dict):
         return self.__class__(self)
 
 
-@torch.jit.script
-def _egt(num_heads: int,
-         dot_dim: int,
-         clip_logits_min: float,
-         clip_logits_max: float,
-         attn_dropout: float,
-         attn_maskout: float,
-         training: bool,
-         QKV: torch.Tensor,
-         G: torch.Tensor,
-         E: torch.Tensor,
-         mask: Optional[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
-    shp = QKV.shape
-    Q, K, V = QKV.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
-    
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
-    H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
-    
-    if mask is None:
-        if attn_maskout > 0 and training:
-            mask = torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
-            gates = torch.sigmoid(G+mask)
-            A_tild = F.softmax(H_hat+mask, dim=2) * gates
-        else:
-            gates = torch.sigmoid(G)
-            A_tild = F.softmax(H_hat, dim=2) * gates
-    else:
-        if attn_maskout > 0 and training:
-            mask = mask + torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
-        gates = torch.sigmoid(G+mask)
-        A_tild = F.softmax(H_hat+mask, dim=2) * gates
-    
-    if attn_dropout > 0:
-        A_tild = F.dropout(A_tild, p=attn_dropout, training=training)
-    V_att = torch.einsum('blmh,bmkh->blkh', A_tild, V)
-    
-    V_att = V_att.reshape(shp[0],shp[1],num_heads*dot_dim)
-    return V_att, H_hat
-
-
-@torch.jit.script
-def _egt_scaled(num_heads: int,
-                dot_dim: int,
-                clip_logits_min: float,
-                clip_logits_max: float,
-                attn_dropout: float,
-                attn_maskout: float,
-                training: bool,
-                num_vns: int,
-                QKV: torch.Tensor,
-                G: torch.Tensor,
-                E: torch.Tensor,
-                mask: Optional[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
-    shp = QKV.shape
-    Q, K, V = QKV.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
-    
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
-    H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
-    
-    if mask is None:
-        if attn_maskout > 0 and training:
-            rmask = torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
-            gates = torch.sigmoid(G)#+rmask
-            A_tild = F.softmax(H_hat+rmask, dim=2) * gates
-        else:
-            gates = torch.sigmoid(G)
-            A_tild = F.softmax(H_hat, dim=2) * gates
-    else:
-        if attn_maskout > 0 and training:
-            rmask = torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
-            gates = torch.sigmoid(G+mask)
-            A_tild = F.softmax(H_hat+mask+rmask, dim=2) * gates
-        else:
-            gates = torch.sigmoid(G+mask)
-            A_tild = F.softmax(H_hat+mask, dim=2) * gates
-    
-    if attn_dropout > 0:
-        A_tild = F.dropout(A_tild, p=attn_dropout, training=training)
-    V_att = torch.einsum('blmh,bmkh->blkh', A_tild, V)
-    
-    degrees = torch.sum(gates,dim=2,keepdim=True)
-    degree_scalers = torch.log(1+degrees)
-    degree_scalers[:,:num_vns] = 1.
-    V_att = V_att * degree_scalers
-    
-    V_att = V_att.reshape(shp[0],shp[1],num_heads*dot_dim)
-    return V_att, H_hat
-
-@torch.jit.script
-def _egt_edge(num_heads: int,
-              dot_dim: int,
-              clip_logits_min: float,
-              clip_logits_max: float,
-              QK: torch.Tensor,
-              E: torch.Tensor) -> torch.Tensor:
-    shp = QK.shape
-    Q, K = QK.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
-    
-    A_hat = torch.einsum('bldh,bmdh->blmh', Q, K) * (dot_dim ** -0.5)
-    H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
-    return H_hat
-
-
 
 class EGT_Layer(nn.Module):
+    @staticmethod
+    @torch.jit.script
+    def _egt(scale_dot: bool,
+             scale_degree: bool,
+             num_heads: int,
+             dot_dim: int,
+             clip_logits_min: float,
+             clip_logits_max: float,
+             attn_dropout: float,
+             attn_maskout: float,
+             training: bool,
+             num_vns: int,
+             QKV: torch.Tensor,
+             G: torch.Tensor,
+             E: torch.Tensor,
+             mask: Optional[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        shp = QKV.shape
+        Q, K, V = QKV.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
+        
+        A_hat = torch.einsum('bldh,bmdh->blmh', Q, K)
+        if scale_dot:
+            A_hat = A_hat * (dot_dim ** -0.5)
+        
+        H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
+        
+        if mask is None:
+            if attn_maskout > 0 and training:
+                rmask = torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
+                gates = torch.sigmoid(G)#+rmask
+                A_tild = F.softmax(H_hat+rmask, dim=2) * gates
+            else:
+                gates = torch.sigmoid(G)
+                A_tild = F.softmax(H_hat, dim=2) * gates
+        else:
+            if attn_maskout > 0 and training:
+                rmask = torch.empty_like(H_hat).bernoulli_(attn_maskout) * -1e9
+                gates = torch.sigmoid(G+mask)
+                A_tild = F.softmax(H_hat+mask+rmask, dim=2) * gates
+            else:
+                gates = torch.sigmoid(G+mask)
+                A_tild = F.softmax(H_hat+mask, dim=2) * gates
+        
+        if attn_dropout > 0:
+            A_tild = F.dropout(A_tild, p=attn_dropout, training=training)
+        
+        V_att = torch.einsum('blmh,bmkh->blkh', A_tild, V)
+        
+        if scale_degree:
+            degrees = torch.sum(gates,dim=2,keepdim=True)
+            degree_scalers = torch.log(1+degrees)
+            degree_scalers[:,:num_vns] = 1.
+            V_att = V_att * degree_scalers
+        
+        V_att = V_att.reshape(shp[0],shp[1],num_heads*dot_dim)
+        return V_att, H_hat
+
+    @staticmethod
+    @torch.jit.script
+    def _egt_edge(scale_dot: bool,
+                  num_heads: int,
+                  dot_dim: int,
+                  clip_logits_min: float,
+                  clip_logits_max: float,
+                  QK: torch.Tensor,
+                  E: torch.Tensor) -> torch.Tensor:
+        shp = QK.shape
+        Q, K = QK.view(shp[0],shp[1],-1,num_heads).split(dot_dim,dim=2)
+        
+        A_hat = torch.einsum('bldh,bmdh->blmh', Q, K)
+        if scale_dot:
+            A_hat = A_hat * (dot_dim ** -0.5)
+        H_hat = A_hat.clamp(clip_logits_min, clip_logits_max) + E
+        return H_hat
+    
     def __init__(self,
                  node_width                      ,
                  edge_width                      ,
@@ -140,6 +111,7 @@ class EGT_Layer(nn.Module):
                  clip_logits_value   = [-5,5]    ,
                  node_ffn_multiplier = 2.        ,
                  edge_ffn_multiplier = 2.        ,
+                 scale_dot           = True      ,
                  scale_degree        = False     ,
                  node_update         = True      ,
                  edge_update         = True      ,
@@ -158,6 +130,7 @@ class EGT_Layer(nn.Module):
         self.clip_logits_value   = clip_logits_value   
         self.node_ffn_multiplier = node_ffn_multiplier 
         self.edge_ffn_multiplier = edge_ffn_multiplier 
+        self.scale_dot           = scale_dot
         self.scale_degree        = scale_degree        
         self.node_update         = node_update         
         self.edge_update         = edge_update        
@@ -214,27 +187,19 @@ class EGT_Layer(nn.Module):
         
         if self.node_update:
             G = self.lin_G(e_ln)
-            if self.scale_degree:
-                V_att, H_hat = _egt_scaled(self.num_heads,
-                                           self.dot_dim,
-                                           self.clip_logits_value[0],
-                                           self.clip_logits_value[1],
-                                           self.attn_dropout,
-                                           self.attn_maskout,
-                                           self.training,
-                                           0 if 'num_vns' not in g else g.num_vns,
-                                           QKV,
-                                           G, E, mask)
-            else:
-                V_att, H_hat = _egt(self.num_heads,
-                                    self.dot_dim,
-                                    self.clip_logits_value[0],
-                                    self.clip_logits_value[1],
-                                    self.attn_dropout,
-                                    self.attn_maskout,
-                                    self.training,
-                                    QKV, G, E, mask)
-                
+            V_att, H_hat = self._egt(self.scale_dot,
+                                     self.scale_degree,
+                                     self.num_heads,
+                                     self.dot_dim,
+                                     self.clip_logits_value[0],
+                                     self.clip_logits_value[1],
+                                     self.attn_dropout,
+                                     self.attn_maskout,
+                                     self.training,
+                                     0 if 'num_vns' not in g else g.num_vns,
+                                     QKV,
+                                     G, E, mask)
+            
             h = self.lin_O_h(V_att)
             if self.node_mha_dropout > 0:
                 h = self.mha_drp_h(h)
@@ -247,11 +212,12 @@ class EGT_Layer(nn.Module):
                 h = self.ffn_drp_h(h)
             h.add_(h_r2)
         else:
-            H_hat = _egt_edge(self.num_heads,
-                              self.dot_dim,
-                              self.clip_logits_value[0],
-                              self.clip_logits_value[1],
-                              QKV, E)
+            H_hat = self._egt_edge(self.scale_dot,
+                                   self.num_heads,
+                                   self.dot_dim,
+                                   self.clip_logits_value[0],
+                                   self.clip_logits_value[1],
+                                   QKV, E)
         
         
         if self.edge_update:

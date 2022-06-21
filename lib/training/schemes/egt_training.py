@@ -32,6 +32,8 @@ class EGTTraining(TestingBase,TrainingBase):
             node_ffn_multiplier = 1.,
             edge_ffn_multiplier = 1.,
             allocate_max_batch  = True,
+            scale_dot_product   = True,
+            egt_simple          = False,
         )
         return config
     
@@ -62,6 +64,8 @@ class EGTTraining(TestingBase,TrainingBase):
             scale_degree        = config.scale_degree         ,
             node_ffn_multiplier = config.node_ffn_multiplier  ,
             edge_ffn_multiplier = config.edge_ffn_multiplier  ,
+            scale_dot           = config.scale_dot_product    ,
+            egt_simple          = config.egt_simple           ,
         )
         return model_config, None
     
