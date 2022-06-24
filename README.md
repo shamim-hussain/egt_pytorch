@@ -18,7 +18,7 @@ Dataset       | #layers | #params | Metric         | Valid           | Test     
 --------------|---------|---------|----------------|-----------------|----------------|
 PCQM4M        | 18      | 47.4M   | MAE            | 0.1225          | --             |
 PCQM4M-V2     | 18      | 47.4M   | MAE            | 0.0883          | --             |
-PCQM4M-V2     | 24      | 89.3M   | MAE            | 0.0869          | 0.0872         |
+PCQM4M-V2     | 24      | 89.3M   | MAE            | 0.0857          | 0.0862         |
 OGBG-MolPCBA  | 30      | 110.8M  | Avg. Precision | 0.3021 ± 0.0053 | 0.2961 ± 0.0024|
 OGBG-MolHIV   | 30      | 110.8M  | ROC-AUC        | 0.8060 ± 0.0065 | 0.8051 ± 0.0030|
 
@@ -26,14 +26,14 @@ OGBG-MolHIV   | 30      | 110.8M  | ROC-AUC        | 0.8060 ± 0.0065 | 0.8051 �
 
 The trained model checkpoints on the PCQM4M-V2 dataset are available at <https://zenodo.org/record/6680242>. Individual *zip* files are downloadable. The extracted folders can be put under the *models/pcqm4mv2* directory. See the *config_input.yaml* file contained within to see the training configurations.
 
-We found that the results can be further improved by freezing the node channel layers and fine-tuning the edge channel layers for a few additional epochs. The corresponding models are given the suffix **-T** and achieve better validation MAE than their untuned counterparts. However, its effect on transfer learning has not yet been studied. That is why we include checkpoints for both tuned and untuned models.
+We found that the results can be further improved by freezing the node channel layers and training the edge channel layers for a few additional epochs. The corresponding tuned models are given the suffix **-T** and achieve better results than their untuned counterparts. However, its effect on transfer learning has not yet been studied. That is why we include checkpoints for both tuned and untuned models.
 
 Model            | #layers | #params | Valid MAE       | Test MAE       | Comment                                |
 -----------------|---------|---------|-----------------|----------------|----------------------------------------|
 EGT-48M-SIMPLE   | 18      | 47.2M   | 0.0872          | --             | EGT-Simple (lightweight variant of EGT)|
 EGT-48M-SIMPLE-T | 18      | 47.2M   | 0.0860          | --             | Tuned version of above                 |
-EGT-90M          | 24      | 89.3M   | 0.0869          | **0.0872**     | **Submitted to the leaderboard**       |
-EGT-90M-T        | 24      | 89.3M   | **0.0857**      | --             | Tuned version of above                 |
+EGT-90M          | 24      | 89.3M   | 0.0869          | 0.0872         | **Submitted to the leaderboard**       |
+EGT-90M-T        | 24      | 89.3M   | **0.0857**      | **0.0862**     | **Submitted tuned version of above**   |
 EGT-110M         | 30      | 110.8M  | 0.0870          | --             | **Used for transfer learning**         |
 EGT-110M-T       | 30      | 110.8M  | 0.0859          | --             | Tuned version of above                 |
 
